@@ -1,14 +1,47 @@
+import axios from "axios";
 import { useForm } from "react-hook-form";
+import { useNavigate } from "react-router-dom";
 const RegisterForm = () => {
   const {
     register,
     handleSubmit,
     watch,
     formState: { errors },
+    setError,
   } = useForm();
   const password = watch("password");
+  const navigate = useNavigate();
+  const onSubmit = async (data) => {
+    try {
+      const requestData = {
+        full_name: data.full_name,
+        email: data.email,
+        password: data.password,
+      };
 
-  const onSubmit = (data) => console.log(data);
+      // Add the role conditionally
+      if (data.admin) {
+        requestData.role = "admin";
+      }
+
+      console.log(requestData);
+
+      let response = await axios.post(
+        `${import.meta.env.VITE_SERVER_BASE_URL}/api/auth/register`,
+        requestData
+      );
+
+      if (response.status === 201) {
+        navigate("/login");
+      }
+    } catch (error) {
+      console.error(error);
+      setError("root.random", {
+        type: "random",
+        message: `Something went wrong: ${error.message}`,
+      });
+    }
+  };
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
       <div>
@@ -110,6 +143,7 @@ const RegisterForm = () => {
           Register as Admin
         </label>
       </div>
+      <p>{errors?.root?.random?.message}</p>
       <button
         type="submit"
         className="w-full bg-primary text-white py-3 rounded-lg mb-2"
