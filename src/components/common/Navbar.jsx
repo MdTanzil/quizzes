@@ -7,7 +7,10 @@ const Navbar = () => {
 
   return (
     <header className="flex justify-between items-center mb-12">
+      <Link to={'/'}>
       <img src={logo} className="h-7" />
+      </Link>
+      
       <div>
         {!user ? (
           <Link

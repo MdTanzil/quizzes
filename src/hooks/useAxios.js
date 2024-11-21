@@ -7,6 +7,7 @@ import useAuth from "./useAuth";
 const useAxios = () => {
   const { auth, setAuth } = useAuth();
 
+  
   useEffect(() => {
     // Add a request interceptor
     const requestIntercept = api.interceptors.request.use(
@@ -32,18 +33,24 @@ const useAxios = () => {
           originalRequest._retry = true;
 
           try {
-            const refreshToken = auth?.refreshToken;
+            const rfToken = auth?.refreshToken;
+            // console.log({"refreshToken": refreshToken});
+            
             const response = await axios.post(
               `${import.meta.env.VITE_SERVER_BASE_URL}/api/auth/refresh-token`,
-              { refreshToken }
+              {"refreshToken":rfToken}
             );
-            const { token } = response.data;
+            
+            const { accessToken } = response.data.data;
+            
 
-            console.log(`New Token: ${token}`);
-            setAuth({ ...auth, authToken: token });
+            console.log(`New Token: ${accessToken }`);
+            setAuth({ ...auth, authToken: accessToken
+            });
 
             // Retry the original request with the new token
-            originalRequest.headers.Authorization = `Bearer ${token}`;
+            originalRequest.headers.Authorization = `Bearer ${accessToken
+            }`;
             return axios(originalRequest);
           } catch (error) {
             throw error;

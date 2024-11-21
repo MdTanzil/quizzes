@@ -1,20 +1,47 @@
+import {  useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
+import useAxios from "../hooks/useAxios";
+import useAuth from "../hooks/useAuth";
+
 const QuizPage = () => {
+  const {id} = useParams()
+  const [quizeData, setQuizeData] = useState({})
+  const {api}= useAxios()
+  const {auth} = useAuth()
+  const {title,description,stats,questions,user_attempt} = quizeData
+  // console.log(id);
+  useEffect(() => {
+    const getQuizSet = async()=>{
+      const response = await api.get(`${import.meta.env.VITE_SERVER_BASE_URL}/api/quizzes/${id}`)
+
+      if (response.status === 200) {
+        const data = response.data.data;
+        setQuizeData(data);
+      }
+    }
+    getQuizSet()
+
+
+  }, []);
+    console.log(quizeData);
+  
+  
   return (
     <main className="max-w-8xl mx-auto h-[calc(100vh-10rem)]">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-10 h-full">
         {/* Left Column */}
         <div className="lg:col-span-1 bg-white rounded-md p-6 h-full flex flex-col">
           <div>
-            <h2 className="text-4xl font-bold mb-4">React Hooks Quiz</h2>
+            <h2 className="text-4xl font-bold mb-4">{title}</h2>
             <p className="text-gray-600 mb-4">
-              A quiz on React hooks like useState, useEffect, and useContext.
+        {description}
             </p>
             <div className="flex flex-col">
               <div className="w-fit bg-green-100 text-green-800 text-sm font-medium px-2.5 py-0.5 rounded-full inline-block mb-2">
-                Total number of questions : 10
+                Total number of questions : {stats?.total_questions}
               </div>
               <div className="w-fit bg-blue-100 text-blue-800 text-sm font-medium px-2.5 py-0.5 rounded-full inline-block mb-2">
-                Participation : 1
+                Participation :  {stats?.total_attempts}
               </div>
               <div className="w-fit bg-gray-100 text-green-800 text-sm font-medium px-2.5 py-0.5 rounded-full inline-block mb-2">
                 Remaining : 9

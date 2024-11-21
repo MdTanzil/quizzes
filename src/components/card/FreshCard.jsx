@@ -1,7 +1,9 @@
 /* eslint-disable react/prop-types */
-import { Link } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 
-const FreshCard = ({ title, thumbnail, description, id }) => {
+const FreshCard = ({ title, thumbnail, description,id }) => {
+ 
+  
   return (
     <Link
       to={`/quiz/${id}`}
