@@ -1,4 +1,26 @@
+import { useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import useAxios from "../hooks/useAxios";
 const Result = () => {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const { api } = useAxios();
+  const [data, setData] = useState({});
+  useEffect(() => {
+    const getQuizSet = async () => {
+      const response = await api.get(
+        `${import.meta.env.VITE_SERVER_BASE_URL}/api/quizzes/${id}/attempts`
+      );
+
+      if (response.status === 200) {
+        const data = response.data.data;
+        setData(data);
+      }
+    };
+    getQuizSet();
+  }, [api, id]);
+  console.log(data);
+
   return (
     <div className="flex min-h-screen overflow-hidden">
       <img
