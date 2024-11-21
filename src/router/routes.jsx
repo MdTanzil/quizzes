@@ -4,6 +4,7 @@ import Home from "../pages/Home";
 import Login from "../pages/Login";
 import QuizPage from "../pages/QuizPage";
 import Register from "../pages/Register";
+import Result from "../pages/Result";
 import Root from "../pages/Root";
 import PrivateRoute from "./PrivateRoute";
 
@@ -20,6 +21,10 @@ const router = createBrowserRouter([
             <QuizPage />
           </PrivateRoute>
         ),
+      },
+      {
+        path: "/results/:id",
+        element: <Result />,
       },
     ],
   },

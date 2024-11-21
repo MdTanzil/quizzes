@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Navigate, useNavigate, useParams } from "react-router-dom";
+import avater from "../assets/avater.webp";
 import useAuth from "../hooks/useAuth";
 import useAxios from "../hooks/useAxios";
 const QuizPage = () => {
@@ -8,10 +9,12 @@ const QuizPage = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState("");
   const [userAnswers, setUserAnswers] = useState([]);
+  const [shuffledOptions, setShuffledOptions] = useState([]);
   const { api } = useAxios();
   const { auth } = useAuth();
   const { title, description, stats, questions, user_attempt } = quizeData;
   const navigate = useNavigate();
+  const currentQuestion = questions?.[currentIndex];
 
   // console.log(id);
   useEffect(() => {
@@ -27,7 +30,11 @@ const QuizPage = () => {
     };
     getQuizSet();
   }, [api, id]);
-
+  useEffect(() => {
+    if (currentQuestion?.options) {
+      setShuffledOptions(shuffleArray([...currentQuestion.options]));
+    }
+  }, [currentQuestion]);
   const handleAnswerSelect = (answer) => {
     setSelectedAnswer(answer);
   };
@@ -73,11 +80,19 @@ const QuizPage = () => {
       }
     }
   };
-  const currentQuestion = questions?.[currentIndex];
-  // console.log("quiz", quizeData);
 
+  // for shuffle option function
+  const shuffleArray = (array) => {
+    for (let i = array.length - 1; i > 0; i--) {
+      const randomIndex = Math.floor(Math.random() * (i + 1));
+      [array[i], array[randomIndex]] = [array[randomIndex], array[i]];
+    }
+    return array;
+  };
+
+  // if already attemp the quiz then redirect to result page
   if (user_attempt?.attempted) {
-    return <Navigate to={"/"}></Navigate>;
+    return <Navigate to={`/results/${id}`}></Navigate>;
   }
 
   return (
@@ -93,20 +108,22 @@ const QuizPage = () => {
                 Total number of questions : {stats?.total_questions}
               </div>
               <div className="w-fit bg-blue-100 text-blue-800 text-sm font-medium px-2.5 py-0.5 rounded-full inline-block mb-2">
-                Participation : {stats?.total_attempts}
+                Participation : {currentIndex}
               </div>
               <div className="w-fit bg-gray-100 text-green-800 text-sm font-medium px-2.5 py-0.5 rounded-full inline-block mb-2">
-                Remaining : 9
+                Remaining :{stats?.total_questions - currentIndex}
               </div>
             </div>
           </div>
           <div className="mt-auto flex items-center">
             <img
-              src="./assets/avater.webp"
-              alt="Mr Hasan"
+              src={avater}
+              alt={auth?.user?.full_name}
               className="w-10 h-10 rounded-full mr-3 object-cover"
             />
-            <span className="text-black font-semibold">Saad Hasan</span>
+            <span className="text-black font-semibold">
+              {auth?.user?.full_name}
+            </span>
           </div>
         </div>
         {/* Right Column */}
@@ -122,7 +139,7 @@ const QuizPage = () => {
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   {/* Option 1 */}
-                  {currentQuestion.options.map((option, i) => (
+                  {shuffledOptions.map((option, i) => (
                     <label
                       key={i}
                       className="flex items-center space-x-3 py-3 px-4 bg-primary/5 rounded-md text-lg"
