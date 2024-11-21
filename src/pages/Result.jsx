@@ -1,11 +1,15 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import ProgressBar from "../components/ProgressBar";
+import useAuth from "../hooks/useAuth";
 import useAxios from "../hooks/useAxios";
 const Result = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { api } = useAxios();
   const [data, setData] = useState({});
+  const { auth } = useAuth();
+  const [quiz, setQuiz] = useState(null);
   useEffect(() => {
     const getQuizSet = async () => {
       const response = await api.get(
@@ -19,7 +23,41 @@ const Result = () => {
     };
     getQuizSet();
   }, [api, id]);
-  console.log(data);
+
+  // Fetch quiz data
+  useEffect(() => {
+    const fetchQuiz = async () => {
+      const quizSetId = data?.quiz?.id;
+      if (quizSetId) {
+        const response = await api.get(
+          `${import.meta.env.VITE_SERVER_BASE_URL}/api/quizzes/${quizSetId}`
+        );
+        if (response.status === 200) {
+          setQuiz(response.data.data);
+        }
+      }
+    };
+    fetchQuiz();
+  }, [api, data]);
+
+  const currentAttemp = data?.attempts?.find(
+    (attempt) => attempt.user?.email === auth.user?.email
+  );
+
+  const totalQuestions = data?.quiz?.total_questions || 0;
+  const correctAnswers = currentAttemp?.submitted_answers.filter(
+    (answer, index) =>
+      answer.answer === currentAttemp.correct_answers[index].answer
+  ).length;
+  const wrongAnswers = totalQuestions - correctAnswers;
+
+  const totalMarks = currentAttemp?.correct_answers.reduce(
+    (acc, curr, index) =>
+      currentAttemp.submitted_answers[index]?.answer === curr.answer
+        ? acc + curr.marks
+        : acc,
+    0
+  );
 
   return (
     <div className="flex min-h-screen overflow-hidden">
@@ -32,24 +70,28 @@ const Result = () => {
         <div>
           <div className="text-white">
             <div>
-              <h2 className="text-4xl font-bold mb-2">React Hooks Quiz</h2>
-              <p>
-                A quiz on React hooks like useState, useEffect, and useContext.{" "}
-              </p>
+              <h2 className="text-4xl font-bold mb-2">{data?.quiz?.title}</h2>
+              <p>{data?.quiz?.description}</p>
             </div>
             <div className="my-6 flex items-center  ">
               <div className="w-1/2">
                 <div className="flex gap-6 my-6">
                   <div>
-                    <p className="font-semibold text-2xl my-0">10</p>
+                    <p className="font-semibold text-2xl my-0">
+                      {totalQuestions}
+                    </p>
                     <p className="text-gray-300">Questions</p>
                   </div>
                   <div>
-                    <p className="font-semibold text-2xl my-0">8</p>
+                    <p className="font-semibold text-2xl my-0">
+                      {correctAnswers}
+                    </p>
                     <p className="text-gray-300">Correct</p>
                   </div>
                   <div>
-                    <p className="font-semibold text-2xl my-0">2</p>
+                    <p className="font-semibold text-2xl my-0">
+                      {wrongAnswers}
+                    </p>
                     <p className="text-gray-300">Wrong</p>
                   </div>
                 </div>
@@ -62,13 +104,15 @@ const Result = () => {
               </div>
               <div className="w-1/2 bg-primary/80 rounded-md border border-white/20 flex items-center p-4">
                 <div className="flex-1">
-                  <p className="text-2xl font-bold">5/10</p>
+                  <p className="text-2xl font-bold">
+                    {totalMarks}/{data?.quiz?.total_marks}
+                  </p>
                   <p>Your Mark</p>
                 </div>
-                <div>
-                  <img
-                    src="./assets/icons/circular-progressbar.svg"
-                    className="h-20"
+                <div className="h-24 w-24">
+                  <ProgressBar
+                    value={totalMarks}
+                    maxValue={data?.quiz?.total_marks}
                   />
                 </div>
               </div>
@@ -81,166 +125,57 @@ const Result = () => {
         <div className="h-[calc(100vh-50px)] overflow-y-scroll ">
           <div className="px-4">
             {/* Question One */}
-            <div className="rounded-lg overflow-hidden shadow-sm mb-4">
-              <div className="bg-white p-6 !pb-2">
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-lg font-semibold">
-                    1. Which of the following is NOT a binary tree traversal
-                    method?
-                  </h3>
+            {quiz?.questions?.map((question, index) => {
+              const userAnswer =
+                currentAttemp?.submitted_answers[index]?.answer;
+
+              const isCorrect = userAnswer === question.correctAnswer;
+
+              return (
+                <div
+                  key={question.id}
+                  className="rounded-lg overflow-hidden shadow-sm mb-4"
+                >
+                  <div className="bg-white p-6 !pb-2">
+                    <div className="flex justify-between items-center mb-4">
+                      <h3 className="text-lg font-semibold">
+                        {index + 1}. {question.question}
+                      </h3>
+                    </div>
+
+                    <div className="space-y-2">
+                      {question?.options.map((option) => (
+                        <label
+                          key={option}
+                          className="flex items-center space-x-3"
+                        >
+                          <input
+                            type="radio"
+                            name={`answer-${question.id}`}
+                            className="form-radio text-buzzr-purple"
+                            value={option}
+                            checked={
+                              option?.toString() === userAnswer?.toString()
+                            }
+                            readOnly
+                          />
+                          <span>{option}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                  <div
+                    className={`flex space-x-4 px-6 py-2 ${
+                      isCorrect ? "bg-green-600" : "bg-red-600"
+                    }`}
+                  >
+                    <p className="text-primary hover:text-primary/80 font-medium">
+                      Correct answers is : {question.correctAnswer}
+                    </p>
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <label className="flex items-center space-x-3">
-                    <input
-                      type="radio"
-                      name="answer1"
-                      className="form-radio text-buzzr-purple"
-                      defaultChecked
-                    />
-                    <span>Inorder</span>
-                  </label>
-                  <label className="flex items-center space-x-3">
-                    <input
-                      type="radio"
-                      name="answer1"
-                      className="form-radio text-buzzr-purple"
-                    />
-                    <span>Preorder</span>
-                  </label>
-                  <label className="flex items-center space-x-3">
-                    <input
-                      type="radio"
-                      name="answer1"
-                      className="form-radio text-buzzr-purple"
-                    />
-                    <span>Postorder</span>
-                  </label>
-                  <label className="flex items-center space-x-3">
-                    <input
-                      type="radio"
-                      name="answer1"
-                      className="form-radio text-buzzr-purple"
-                    />
-                    <span>Crossorder</span>
-                  </label>
-                </div>
-              </div>
-              <div className="flex space-x-4 bg-primary/10 px-6 py-2">
-                <button className="text-red-600 hover:text-red-800 font-medium">
-                  Delete
-                </button>
-                <button className="text-primary hover:text-primary/80 font-medium">
-                  Edit Question
-                </button>
-              </div>
-            </div>
-            {/* Question Two */}
-            <div className="rounded-lg overflow-hidden shadow-sm mb-4">
-              <div className="bg-white p-6 !pb-2">
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-lg font-semibold">
-                    2. What is the maximum number of nodes at level 'L' in a
-                    binary tree?
-                  </h3>
-                </div>
-                <div className="space-y-2">
-                  <label className="flex items-center space-x-3">
-                    <input
-                      type="radio"
-                      name="answer2"
-                      className="form-radio text-buzzr-purple"
-                      defaultChecked
-                    />
-                    <span>2^L</span>
-                  </label>
-                  <label className="flex items-center space-x-3">
-                    <input
-                      type="radio"
-                      name="answer2"
-                      className="form-radio text-buzzr-purple"
-                    />
-                    <span>L</span>
-                  </label>
-                  <label className="flex items-center space-x-3">
-                    <input
-                      type="radio"
-                      name="answer2"
-                      className="form-radio text-buzzr-purple"
-                    />
-                    <span>2^(L-1)</span>
-                  </label>
-                  <label className="flex items-center space-x-3">
-                    <input
-                      type="radio"
-                      name="answer2"
-                      className="form-radio text-buzzr-purple"
-                    />
-                    <span>2L</span>
-                  </label>
-                </div>
-              </div>
-              <div className="flex space-x-4 bg-primary/10 px-6 py-2">
-                <button className="text-red-600 hover:text-red-800 font-medium">
-                  Delete
-                </button>
-                <button className="text-primary hover:text-primary/80 font-medium">
-                  Edit Question
-                </button>
-              </div>
-            </div>
-            {/* Question 3 */}
-            <div className="rounded-lg overflow-hidden shadow-sm mb-4">
-              <div className="bg-white p-6 !pb-2">
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-lg font-semibold">
-                    3. What is the height of an empty binary tree?
-                  </h3>
-                </div>
-                <div className="space-y-2">
-                  <label className="flex items-center space-x-3">
-                    <input
-                      type="radio"
-                      name="answer3"
-                      className="form-radio text-buzzr-purple"
-                      defaultChecked
-                    />
-                    <span>0</span>
-                  </label>
-                  <label className="flex items-center space-x-3">
-                    <input
-                      type="radio"
-                      name="answer3"
-                      className="form-radio text-buzzr-purple"
-                    />
-                    <span>-1</span>
-                  </label>
-                  <label className="flex items-center space-x-3">
-                    <input
-                      type="radio"
-                      name="answer3"
-                      className="form-radio text-buzzr-purple"
-                    />
-                    <span>1</span>
-                  </label>
-                  <label className="flex items-center space-x-3">
-                    <input
-                      type="radio"
-                      name="answer3"
-                      className="form-radio text-buzzr-purple"
-                    />
-                    <span>Undefined</span>
-                  </label>
-                </div>
-              </div>
-              <div className="flex space-x-4 bg-primary/10 px-6 py-2">
-                <button className="text-red-600 hover:text-red-800 font-medium">
-                  Delete
-                </button>
-                <button className="text-primary hover:text-primary/80 font-medium">
-                  Edit Question
-                </button>
-              </div>
-            </div>
+              );
+            })}
           </div>
         </div>
       </div>
