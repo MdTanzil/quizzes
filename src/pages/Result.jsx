@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import ProgressBar from "../components/ProgressBar";
 import useAuth from "../hooks/useAuth";
 import useAxios from "../hooks/useAxios";
@@ -61,10 +61,6 @@ const Result = () => {
 
   return (
     <div className="flex min-h-screen overflow-hidden">
-      <img
-        src="./assets/logo-white.svg"
-        className="max-h-11 fixed left-6 top-6 z-50"
-      />
       {/* Left side */}
       <div className="max-h-screen overflow-hidden hidden lg:flex lg:w-1/2 bg-primary flex-col justify-center p-12 relative">
         <div>
@@ -95,12 +91,12 @@ const Result = () => {
                     <p className="text-gray-300">Wrong</p>
                   </div>
                 </div>
-                <a
-                  href="./leaderboard_page.html"
+                <Link
+                  to={`/leaderboard/${data?.quiz?.id}`}
                   className=" bg-secondary py-3 rounded-md hover:bg-secondary/90 transition-colors text-lg font-medium underline text-white"
                 >
                   View Leaderboard
-                </a>
+                </Link>
               </div>
               <div className="w-1/2 bg-primary/80 rounded-md border border-white/20 flex items-center p-4">
                 <div className="flex-1">

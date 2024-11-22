@@ -1,6 +1,7 @@
 // routes.js
 import { createBrowserRouter } from "react-router-dom";
 import Home from "../pages/Home";
+import Leaderboard from "../pages/Leaderboard";
 import Login from "../pages/Login";
 import QuizPage from "../pages/QuizPage";
 import Register from "../pages/Register";
@@ -25,6 +26,11 @@ const router = createBrowserRouter([
       {
         path: "/results/:id",
         element: <Result />,
+      },
+
+      {
+        path: "/leaderboard/:id",
+        element: <Leaderboard />,
       },
     ],
   },
